@@ -117,14 +117,40 @@ void CairoContext::setFont(std::string fontname, double fontsize,
 }
 
 FontMetric CairoContext::getExtents(std::string x) {
-  cairo_text_extents_t te;
-  cairo_text_extents(cairo_->context, x.c_str(), &te);
+  // cairo_text_extents_t te;
+  // cairo_text_extents(cairo_->context, x.c_str(), &te);
+
+  // FontMetric fm;
+  // fm.height = te.height;
+  // fm.width = te.x_advance;
+  // fm.ascent = -te.y_bearing;
+  // fm.descent = te.height + te.y_bearing;
+
 
   FontMetric fm;
-  fm.height = te.height;
-  fm.width = te.x_advance;
-  fm.ascent = -te.y_bearing;
-  fm.descent = te.height + te.y_bearing;
+  fm.height = 0;
+  fm.width = 0;
+
+  while (x.length() > 0) {
+    std::string sstr;
+
+    size_t pos = x.find('\n');
+    if (pos == std::string::npos) {
+      sstr = x;
+      x = "";
+    } else {
+      sstr = x.substr(0, pos);
+      x = x.substr(pos + 1);
+    }
+
+    cairo_text_extents_t te;
+    cairo_text_extents(cairo_->context, sstr.c_str(), &te);
+    fm.height += te.height;
+    fm.width = std::max(fm.width, te.x_advance);
+    // TODO: Do we need to accumulate `ascent` and `descent`?
+    fm.ascent += -te.y_bearing;
+    fm.descent += te.height + te.y_bearing;
+  }
 
   return fm;
 }
